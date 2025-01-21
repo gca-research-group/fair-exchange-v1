@@ -1,6 +1,6 @@
-from appDhully.alice.Configurations import ConfigsAlice
-from appDhully.service.EncryptationProcessService import EncryptationProcessService
-from appDhully.service.ExchangeEncyptedFileService import ExchangeEncryptedFile
+from srcFewd.alice.Configurations import ConfigsAlice
+from srcFewd.service.EncryptationProcessService import EncryptationProcessService
+from srcFewd.service.ExchangeEncyptedFileService import ExchangeEncryptedFile
 
 
 def main():

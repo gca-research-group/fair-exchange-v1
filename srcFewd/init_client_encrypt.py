@@ -1,5 +1,5 @@
-from appDhully.alice.Configurations import ConfigsAlice
-from appDhully.service.EncryptationProcessService import EncryptationProcessService
+from srcFewd.alice.Configurations import ConfigsAlice
+from srcFewd.service.EncryptationProcessService import EncryptationProcessService
 
 
 def main():

@@ -1,24 +1,3 @@
-"""
-title           : socket_files.py
-description     : This server1 implements function that perform operations
-                : to send and receive files over sockets. 
-                :
-source          : It is based on the example from
-                :  https://www.thepythoncode.com/code/send-receive-files-using-sockets-python 
-                :
-author          : Carlos Molina Jimenez (Carlos.Molina@cl.cam.ac.uk)
-institution     : Computer Lab, University of Cambridge
-date            : 3 Jul 2023
-version         : 1.0
-usage           : 
-notes           :
-compile and run :  It can be imported by  clients and server1 that  send and
-                :  receive files over sockets.
-                :
-python_version  : Python 3.7.4 (default, Oct  8 2019, 14:48:17) 
-"""
-
-
 import socket
 import ssl
 

@@ -1,7 +1,7 @@
 import ssl
 
-from appDhully.server.Utils.file_common import FileCommon
-from appDhully.server.Utils.files2sockets import read_send_file, recv_store_file, send_content
+from srcFewd.server.Utils.file_common import FileCommon
+from srcFewd.server.Utils.files2sockets import read_send_file, recv_store_file, send_content
 import os
 
 class ClientHandler:

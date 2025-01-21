@@ -5,7 +5,7 @@ import time
 
 from tqdm import tqdm
 
-from appDhully.server.Utils.files2sockets import recv_store_file, read_send_file
+from srcFewd.server.Utils.files2sockets import recv_store_file, read_send_file
 
 
 class ClientSSL():

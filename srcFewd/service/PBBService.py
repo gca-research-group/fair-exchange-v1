@@ -3,8 +3,8 @@ import socket
 import threading
 import time
 
-from appDhully.PBB.client import start_client
-from appDhully.PBB.main_pbb import start_server
+from srcFewd.PBB.client import start_client
+from srcFewd.PBB.main_pbb import start_server
 
 class PBBService():
     def __init__(self):

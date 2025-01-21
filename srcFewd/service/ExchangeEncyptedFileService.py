@@ -1,10 +1,10 @@
 import threading
 import time
 
-from appDhully.alice.Configurations import ConfigsAlice
-from appDhully.bob.Configurations import ConfigsBob
-from appDhully.client.Client import ClientSSL
-from appDhully.server.ServerSSL import ServerSSL
+from srcFewd.alice.Configurations import ConfigsAlice
+from srcFewd.bob.Configurations import ConfigsBob
+from srcFewd.client.Client import ClientSSL
+from srcFewd.server.ServerSSL import ServerSSL
 
 
 class ExchangeEncryptedFile():

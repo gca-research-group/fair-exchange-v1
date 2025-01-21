@@ -4,11 +4,11 @@ import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from appDhully.alice.Configurations import ConfigsAlice
-from appDhully.service.SincronizationProcessService import SincronizationProcessService
-from appDhully.service.EncryptationProcessService import EncryptationProcessService
-from appDhully.service.ExchangeEncyptedFileService import ExchangeEncryptedFile
-from appDhully.bob.Configurations import ConfigsBob
+from srcFewd.alice.Configurations import ConfigsAlice
+from srcFewd.service.SincronizationProcessService import SincronizationProcessService
+from srcFewd.service.EncryptationProcessService import EncryptationProcessService
+from srcFewd.service.ExchangeEncyptedFileService import ExchangeEncryptedFile
+from srcFewd.bob.Configurations import ConfigsBob
 
 def main():
     options = {
