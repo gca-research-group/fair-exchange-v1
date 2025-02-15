@@ -1,4 +1,0 @@
-This file (helloClient.txt) is taken by default by the 
-test_SSLserverfile.py to send to the server to initiate 
-file exchange.
-
