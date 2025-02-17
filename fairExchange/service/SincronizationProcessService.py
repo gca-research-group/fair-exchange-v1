@@ -19,10 +19,10 @@ class SincronizationProcessService:
 
         print("Starting PBB synchronization...")
         pbbService = PBBService()
-        pbbService.syncA_syncB()
+        #pbbService.syncA_syncB()
         #pbbService.syncA_cancelA_SyncB()
         #pbbService.syncA_cancelB()
-        #pbbService.cancelA_syncB()
+        pbbService.cancelA_syncB()
 
         #############################
         # pbbService.syncB_syncA()

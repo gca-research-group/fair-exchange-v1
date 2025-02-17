@@ -24,7 +24,7 @@ def start_client(client_name, key, option):
         if "cancel" in response.lower():
             acao = "Abort exchange. \n"+client_name+"'s attestable sends notification of abort to "+client_name+"'s application"
         else:
-            acao = "The exchange can be successfully completed. \n"+client_name+"'s attestable sends D_B to "+client_name+"'s application.\n"+client_name+"'s application is now in possession of "+client_name+"’s item.. "
+            acao = "The exchange can be successfully completed. \n"+client_name+"'s attestable sends D_B to "+client_name+"'s application."
         print(f"\n The PBB responded with: {response}. {acao}")
     except ConnectionResetError:
         print(f"Connection reset by peer while receiving response for {option}")
