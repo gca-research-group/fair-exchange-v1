@@ -1,8 +1,8 @@
 import threading
 import time
 
-from appDhully.client.Client import ClientSSL
-from appDhully.server.ServerSSL import ServerSSL
+from fairExchange.client.Client import ClientSSL
+from fairExchange.server.ServerSSL import ServerSSL
 
 
 class EncryptationProcessService():

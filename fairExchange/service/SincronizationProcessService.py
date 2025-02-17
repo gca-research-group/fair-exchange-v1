@@ -1,5 +1,5 @@
-from appDhully.service.PBBService import PBBService
-from appDhully.KiT.KiT import main as kit_main
+from fairExchange.service.PBBService import PBBService
+from fairExchange.KiT.KiT import main as kit_main
 
 class SincronizationProcessService:
     def display_sync_menu(self):

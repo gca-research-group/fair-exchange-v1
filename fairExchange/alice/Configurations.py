@@ -1,8 +1,8 @@
 import argparse
 from pathlib import Path
-from appDhully.Utils.Configurations import Configuration
-from appDhully.Utils.ConfigServer import ConfigServerModule
-from appDhully.Utils.ConfigClient import ConfigClientModule
+from fairExchange.Utils.Configurations import Configuration
+from fairExchange.Utils.ConfigServer import ConfigServerModule
+from fairExchange.Utils.ConfigClient import ConfigClientModule
 
 class ConfigsAlice:
 
