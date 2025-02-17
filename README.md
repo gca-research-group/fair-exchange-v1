@@ -3,7 +3,7 @@ Implementation and analysis of a synchronisation protocol for fair exchange with
 
 how to run the script:
 
-1. On the Git, download the script by selecting 'CODE' and then click on 'DOWNLOAD ZIP' to save it to your machine.
+1. On the Git, download the script (fairExchange) by selecting 'CODE' and then click on 'DOWNLOAD ZIP' to save it to your machine.
 2. Use the terminal to call the main class "main.py";
 3. When running, choose option '1', which is to encrypt the document;
 4. After the document is encrypted, select option '2' to exchange the document;
