@@ -1,17 +1,23 @@
 # fair-exchange
 Implementation and analysis of a synchronisation protocol for fair exchange with strong fairness and privacy.
 
-how to run the script:
+I have tested the protocol in the following environment:
 
-1. On the Git, download the script (fairExchange) by selecting 'CODE' and then click on 'DOWNLOAD ZIP' to save it to your machine.
-2. Use the terminal to call the main class "main.py";
-3. When running, choose option '1', which is to encrypt the document;
-4. After the document is encrypted, select option '2' to exchange the document;
-5. Once the exchange is executed, the next step is to run the synchronization, in this case, choose option '3';
-6. The next step is the synchronization type. For this task, we use synchronization with the PBB, option '1'.<br>
-    <p>a. The result of the exchange will be presented at the end of the synchronization as either 'success' or 'failure'.
+Computer:   MacOS version 14.4.1
+
+Python:  what version 3.11
+
+To run the fair exchange protocol to help Alice and Bob to exchange their documents (DA and DB, respectively), execute the following steps:
+
+1. Download the Python code (fairExchange) by selecting 'CODE' and then click on 'DOWNLOAD ZIP' to save it to your machine;
+2. Open a terminal and run the main class:  python main.py;
+3. From the menu choose option '1', to encrypt Alice’s and Bob’s documents;
+4. Deposit operation: after encrypting the documents, select option '2' to execute the deposit operation: Alice’s document is deposited with Bob’s attestable and Bob’s document is deposited with Alice’s attestable;
+5. Synchronise operation: select option ‘3’ to execute the synchronisation operation;
+6. Select the synchronization type. Use synchronization with the PBB, option '1'.<br>
+    <p>a. The result of the exchange will be presented at the end of the synchronization as either 'Success' or 'Cancel'.
     <p>b. As it stands, when executing the final step, which is synchronization, the result will be a success.
-7. To test other cases and get results like failure (e.g., Cancel_A and Sync_B, or any other case of the 8 explored in the paper), the user should go to the class “SynchronizationProcessService” and in the method def pbb_synchronization(self):, choose the case they want to execute (to do this, remove "#" from the case you want to run and leave the others commented out):
+7. To run the protocol to produce different outcomes like cancel, for example, because Alice posts Cancel_A and Bob posts Sync_B find the class “SynchronizationProcessService” in the method def pbb_synchronization(self):, choose the case that you want to execute by removing "#". Leave the other cases commented out:
          pbbService.syncA_syncB()
    
         #pbbService.syncA_cancelA_SyncB()
