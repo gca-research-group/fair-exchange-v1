@@ -16,7 +16,7 @@ To run the fair exchange protocol to help Alice and Bob to exchange their docume
 5. Synchronise operation: select option ‘3’ to execute the synchronisation operation;
 6. Select the synchronization type. Use synchronization with the PBB, option '1'.<br>
     <p>a. The result of the exchange will be presented at the end of the synchronization as either 'Success' or 'Cancel'.
-    <p>b. As it stands, when executing the final step, which is synchronization, the result will be a success.
+    <p>b. As it stands, when executing the synchronise operation, the result will be a success.
 7. To run the protocol to produce different outcomes like cancel, for example, because Alice posts Cancel_A and Bob posts Sync_B find the class “SynchronizationProcessService” in the method def pbb_synchronization(self):, choose the case that you want to execute by removing "#". Leave the other cases commented out:
          pbbService.syncA_syncB()
    
