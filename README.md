@@ -1,7 +1,7 @@
 # fair-exchange
 Implementation and analysis of a synchronisation protocol for fair exchange with strong fairness and privacy.
 
-Abstract
+<b>Abstract<br>
   Strong fairness is a highly desirable property in fair exchange protocols; it guarantees that either the items are exchanged or remain with their original owners. Privacy is another desirable property --- it guarantees that the protocol does not leak sensitive information to third parties. It has proven to be hard to guarantee both. Existing fair exchange protocols with strong fairness including those used in current online payment versus delivery, are unable to guarantee privacy. The reason is that they use monolithic trusted third parties that indiscriminately execute crucial operations that leak information. In this paper, we claim that privacy can be guaranteed by replacing the monolithic trusted third party by a split trusted third party composed of two trusted execution environments (one on the device of each participant) and a public bulletin board. The latter is used only for synchronising the exchange and without leaking sensitive information. We show results from an implementation that demonstrate that strong fairness, privacy, and other properties can be guaranteed with the split trusted third party approach.
 
 <h1>Environment</h1>
