@@ -70,7 +70,7 @@ class EncryptationProcessService():
             Instância do servidor
         """
         try:
-            logger.info(f" --> {conf.configuration.client_name} iniciando seu Attestable")
+            logger.info(f" --> 1 - {conf.configuration.client_name} iniciando seu Attestable")
 
             # Garantir que os diretórios necessários existam
             client_dir = Path(f"{conf.configuration.client_name}")
@@ -90,6 +90,8 @@ class EncryptationProcessService():
             )
 
             self.server = server
+            logger.info(f" --> Attestable de {conf.configuration.client_name} iniciado com sucesso")
+
             return server
 
         except Exception as e:
@@ -107,6 +109,8 @@ class EncryptationProcessService():
             Tupla (cliente, arquivo_recebido)
         """
         try:
+            logger.info(f" --> 2 - Iniciando cliente para {conf.configuration.client_name}")
+
             # Criar e iniciar o cliente
             client = ClientSSL(
                 conf,
@@ -132,10 +136,13 @@ class EncryptationProcessService():
                 raise Exception(f"Arquivo não encontrado: {file_path}")
 
             # Enviar arquivo para encriptação e receber arquivo encriptado
+            logger.info(f" --> 3 - Enviando arquivo {cliente_f} para encriptação")
             received_file = client.send_and_receive_encrypted_file(file_path)
 
             if not received_file:
                 raise Exception("Falha ao receber arquivo encriptado")
+
+            logger.info(f" --> 4 - Arquivo encriptado recebido: {received_file}")
 
             return client, path_f / received_file
 
@@ -147,6 +154,8 @@ class EncryptationProcessService():
         """
         Limpa recursos utilizados pelo processo de encriptação.
         """
+        logger.info("Limpando recursos...")
+
         # Fechar cliente
         if self.client:
             try:
@@ -160,6 +169,8 @@ class EncryptationProcessService():
                 self.server.stop_server()
             except:
                 pass
+
+        logger.info("Recursos limpos")
 
     def __del__(self):
         """
