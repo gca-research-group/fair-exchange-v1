@@ -2,10 +2,12 @@ import socket
 import ssl
 import os
 import time
-
+import logging
 from tqdm import tqdm
 
-from fairExchange.server.Utils.files2sockets import recv_store_file, read_send_file
+# Configurar logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('ClientSSL')
 
 
 class ClientSSL():
@@ -18,130 +20,277 @@ class ClientSSL():
         self.server = host
         self.port = port
         self.headersize = config.headersize
+        self.buffer_size = config.buffer_size
+        self.separator = config.separator
         self.soc = None
         self.conn = None
         self.use_ssl = use_ssl
+        self.context = None
+        self.connected = False
+        self.max_retries = 3
 
+    def sock_connect(self, serverName, retries=0):
+        """
+        Estabelece conexão com o servidor com suporte a reconexão automática
+        """
+        if self.connected and self.conn:
+            logger.info(f"Já conectado ao servidor {serverName}")
+            return True
 
-
-    def sock_connect(self, serverName):
-        self.server = self.server
-        self.port = self.port
-
-        self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if self.use_ssl:
-            # Create a standard TCP Socket
-            # Create SSL context which holds the parameters for any sessions
-            context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-            context.load_verify_locations(self.config_client.configuration.config_client.ca_cert)
-            context.load_cert_chain(certfile=self.client_cert_chain,
-                                    keyfile=self.client_key, password="camb")
-
-            # We can wrap in an SSL context first, then connect
-            self.conn = context.wrap_socket(self.soc, server_hostname=serverName)
-            #self.conn = context.wrap_socket(self.soc, server_hostname=serverName + " CAMB")
-        else:
-            self.conn = self.soc
-        # OK 27Jul2023
-        self.conn.connect((self.server, self.port))
-
-    def send_recv_file(self, filename):
         try:
-            # This method uses the already connected conn socket
-            print("Negotiated session using cipher suite: {0}\n".format(self.conn.cipher()[0]))
+            self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            print("cli-request_file.py: before send")
-            self.conn.send(b"Send me your encrypted doc!\n")
-            print("cli-request_file.py: after send")
+            if self.use_ssl:
+                # Criar contexto SSL apenas uma vez
+                if not self.context:
+                    self.context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
 
-            print("cli_file_flie.py now waiting from string from ser_file_file.py")
-            received = self.conn.recv(self.config_client.configuration.buffer_size).decode()
-            remote_filename, filesize = received.split(self.config_client.configuration.separator)
-            remote_filename = os.path.basename(remote_filename)
-            remote_filename = self.config_client.configuration.recv_file_name_prefix + remote_filename
-            filesize = int(filesize)
-            recv_store_file(remote_filename, filesize, self.config_client.configuration.buffer_size, self.conn)
-            print("cli_file_flie.py has received file from ser_file_file.py")
+                    # Verificar se o certificado CA existe
+                    ca_cert_path = self.config_client.configuration.config_client.ca_cert
+                    if os.path.exists(ca_cert_path):
+                        self.context.load_verify_locations(ca_cert_path)
+                    else:
+                        logger.warning(
+                            f"Certificado CA não encontrado: {ca_cert_path}. Verificação de servidor desativada.")
+                        self.context.check_hostname = False
+                        self.context.verify_mode = ssl.CERT_NONE
 
-        finally:
-            if self.conn is not None:
-                self.conn.close()
+                    # Carregar certificado e chave do cliente
+                    self.context.load_cert_chain(
+                        certfile=self.client_cert_chain,
+                        keyfile=self.client_key,
+                        password="camb"
+                    )
+
+                # Envolver o socket com SSL
+                self.conn = self.context.wrap_socket(self.soc, server_hostname=serverName)
+            else:
+                self.conn = self.soc
+
+            # Estabelecer conexão
+            self.conn.connect((self.server, self.port))
+            self.connected = True
+
+            return True
+
+        except (socket.error, ssl.SSLError) as e:
+            logger.error(f"Erro ao conectar: {e}")
+            self.close_socket()
+
+            # Tentar reconectar automaticamente
+            if retries < self.max_retries:
+                logger.info(f"Tentando reconectar ({retries + 1}/{self.max_retries})...")
+                time.sleep(2)  # Esperar antes de reconectar
+                return self.sock_connect(serverName, retries + 1)
+            else:
+                logger.error(f"Falha ao conectar após {self.max_retries} tentativas")
+                return False
 
     def send_and_receive_encrypted_file(self, file_path):
-        progress = None
+        """
+        Envia um arquivo para o attestable encriptar e recebe o arquivo encriptado
+        """
+        if not self.connected and not self.sock_connect("GCA"):
+            logger.error("Não foi possível conectar ao attestable")
+            return None
+
+        progress_send = None
+        progress_recv = None
+
         try:
-            # Read the original file data
-            with open(file_path, 'rb') as file:
-                file_data = file.read()
+            # Verificar se o arquivo existe
+            if not os.path.exists(file_path):
+                logger.error(f"Arquivo não encontrado: {file_path}")
+                return None
 
             file_size = os.path.getsize(file_path)
-
-            progress = tqdm(total=file_size, desc=F"{self.client_name} sends file to ATT for encryption", unit="B", unit_scale=True)
-
-            # send data file to server
-            block_size = 1024  # 1KB
-            for i in range(0, len(file_data), block_size):
-                data_block = file_data[i:i + block_size]
-                self.conn.sendall(data_block)
-                progress.update(len(data_block))
-
-            # Receive response from server
-            response = self.conn.recv(4096)  # Adjust buffer size as needed
-            print(f"Response from server")
-
-            # Get the base name of the original file and add "_encrypted" to it
             base_name = os.path.basename(file_path)
-            encrypted_file_name = f"{self.client_name}doc_encrypted{os.path.splitext(base_name)[1]}".lower()
 
-            # Write the original file data to a new file in the 'alice/files' directory
-            with open(f'{self.client_name}/files/{encrypted_file_name}'.lower(), 'wb') as temp_file:
-                temp_file.write(response)
-            return encrypted_file_name
+            # Enviar comando para encriptar arquivo
+            command = f"ENCRYPT_FILE:{base_name}:{file_size}"
+            self.conn.send(command.encode())
+
+            # Aguardar confirmação do servidor
+            response = self.conn.recv(1024).decode()
+            if not response.startswith("READY"):
+                logger.error(f"Servidor não está pronto: {response}")
+                return None
+
+            # Enviar o arquivo
+            progress_send = tqdm(total=file_size, desc=f"{self.client_name} envia arquivo para ATT", unit="B",
+                                 unit_scale=True)
+
+            # Enviar o arquivo em blocos
+            with open(file_path, 'rb') as f:
+                bytes_sent = 0
+                while bytes_sent < file_size:
+                    data = f.read(self.buffer_size)
+                    if not data:
+                        break
+                    self.conn.sendall(data)
+                    bytes_sent += len(data)
+                    progress_send.update(len(data))
+
+            progress_send.close()
+
+            # Receber resposta do servidor
+            response = self.conn.recv(1024).decode()
+
+            if response.startswith("ERROR:"):
+                logger.error(f"Erro na encriptação: {response[6:]}")
+                return None
+
+            if response.startswith("ENCRYPTED_FILE:"):
+                # Formato: ENCRYPTED_FILE:nome_arquivo:tamanho
+                parts = response.split(":", 2)
+                if len(parts) < 3:
+                    logger.error("Formato de resposta inválido")
+                    return None
+
+                _, encrypted_name, encrypted_size = parts
+                encrypted_size = int(encrypted_size)
+
+                # Criar nome do arquivo encriptado
+                encrypted_file_path = f'{self.client_name}/files/{encrypted_name}'.lower()
+
+                # Garantir que o diretório existe
+                os.makedirs(os.path.dirname(encrypted_file_path), exist_ok=True)
+
+                # Receber o arquivo encriptado
+                progress_recv = tqdm(total=encrypted_size, desc=f"Recebendo arquivo encriptado", unit="B",
+                                     unit_scale=True)
+
+                # Receber e salvar o arquivo encriptado
+                with open(encrypted_file_path, "wb") as f:
+                    bytes_received = 0
+                    while bytes_received < encrypted_size:
+                        bytes_to_read = min(self.buffer_size, encrypted_size - bytes_received)
+                        data = self.conn.recv(bytes_to_read)
+                        if not data:
+                            break
+                        f.write(data)
+                        bytes_received += len(data)
+                        progress_recv.update(len(data))
+
+                return encrypted_name
+            else:
+                logger.error(f"Resposta inesperada do servidor: {response}")
+                return None
+
         except Exception as e:
-            print(f"erro to send file to server: {e}")
+            logger.error(f"Erro ao encriptar arquivo: {e}")
+            return None
         finally:
-            if self.conn is not None:
-                self.conn.close()
-            if progress is not None:
-                progress.close()
+            if progress_send:
+                progress_send.close()
+            if progress_recv:
+                progress_recv.close()
 
-
-        # Return the new encrypted file name
     def exchange_encrypted_file(self, filename):
-        conn = self.conn
-        separator = self.config_client.configuration.separator
-        buffer_size = self.config_client.configuration.buffer_size
+        """
+        Troca arquivos encriptados com outro cliente
+        """
+        if not self.connected:
+            logger.error("Não conectado ao servidor")
+            return False
+
         try:
-            # This method uses the already connected conn socket
+            if not os.path.exists(filename):
+                logger.error(f"Arquivo não encontrado: {filename}")
+                return False
 
-            print("Negotiated session using cipher suite: {0}\n".format(conn.cipher()[0]))
-
-            # experimenting with simon.txt file stored on current subdir
-            # filename= FILE_NAME
             filesize = os.path.getsize(filename)
 
-            # In python sockets send and receive strings. Send a string
-            conn.send(f"{filename}{separator}{filesize}".encode())
+            # Enviar comando para iniciar troca
+            command = f"EXCHANGE_FILE:{os.path.basename(filename)}:{filesize}"
+            self.conn.send(command.encode())
 
-            ########## client will send file to server ########
-            read_send_file(filename, filesize, buffer_size, conn)
+            # Aguardar confirmação
+            response = self.conn.recv(self.buffer_size).decode()
+            if not response.startswith("READY"):
+                logger.error(f"Servidor não está pronto para troca: {response}")
+                return False
 
-            #####  client will receive file from server #####
-            print("cli_file_flie.py now waiting from string from ser_file_file.py")
-            received = conn.recv(buffer_size).decode()
-            filename, filesize = received.split(separator)
-            # remove filename path if any
-            filename = os.path.basename(filename)
-            filesize = int(filesize)
-            # start receiving the file from the socket
-            # and writing to the file stream
-            recv_store_file(self.config_client.configuration.path_file/filename, filesize, buffer_size, conn)
-            print("cli_file_flie.py has received file from ser_file_file.py")
+            # Enviar arquivo
+            logger.info(f"Enviando arquivo {filename} ({filesize} bytes) para troca")
 
-        finally:
-            if self.conn is not None:
-                self.conn.close()
+            # Enviar o arquivo em blocos
+            with open(filename, 'rb') as f:
+                bytes_sent = 0
+                while bytes_sent < filesize:
+                    data = f.read(self.buffer_size)
+                    if not data:
+                        break
+                    self.conn.sendall(data)
+                    bytes_sent += len(data)
+
+            # Receber resposta do servidor
+            response = self.conn.recv(self.buffer_size).decode()
+
+            if response.startswith("ERROR:"):
+                logger.error(f"Erro na troca: {response[6:]}")
+                return False
+
+            if response.startswith("INCOMING_FILE:"):
+                # Formato: INCOMING_FILE:nome_arquivo:tamanho
+                parts = response.split(":", 2)
+                if len(parts) < 3:
+                    logger.error("Formato de resposta inválido")
+                    return False
+
+                _, incoming_filename, incoming_filesize = parts
+                incoming_filesize = int(incoming_filesize)
+
+                # Definir caminho para salvar o arquivo recebido
+                save_path = self.config_client.configuration.path_file / incoming_filename
+
+                # Garantir que o diretório existe
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+                # Receber e salvar o arquivo
+                logger.info(f"Recebendo arquivo {incoming_filename} ({incoming_filesize} bytes)")
+
+                with open(save_path, "wb") as f:
+                    bytes_received = 0
+                    while bytes_received < incoming_filesize:
+                        bytes_to_read = min(self.buffer_size, incoming_filesize - bytes_received)
+                        data = self.conn.recv(bytes_to_read)
+                        if not data:
+                            break
+                        f.write(data)
+                        bytes_received += len(data)
+
+                logger.info(f"Troca concluída com sucesso. Arquivo recebido: {save_path}")
+                return True
+            else:
+                logger.error(f"Resposta inesperada durante a troca: {response}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Erro durante a troca de arquivos: {e}")
+            return False
+
     def close_socket(self):
-        if self.conn is not None:
-            self.soc.close()
-            self.conn.close()
+        """
+        Fecha a conexão com o servidor de forma segura
+        """
+        try:
+            if self.conn:
+                # Enviar comando de desconexão
+                try:
+                    self.conn.send(b"DISCONNECT")
+                except:
+                    pass  # Ignorar erros ao enviar comando de desconexão
+
+                # Fechar conexão
+                self.conn.close()
+
+            if self.soc:
+                self.soc.close()
+
+            self.conn = None
+            self.soc = None
+            self.connected = False
+
+        except Exception as e:
+            logger.error(f"Erro ao fechar conexão: {e}")
